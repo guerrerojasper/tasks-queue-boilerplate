@@ -1,0 +1,1 @@
+from worker.global_init import app
