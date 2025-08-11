@@ -54,7 +54,7 @@ class ConnectionHandler:
         
         if not self.__engines:
             # TODO: Logger class
-            print(f"No database could be connected. Database list: {",".join(self.__database_list)} ")
+            print(f"No database could be connected. Database list: {','.join(self.__database_list)} ")
             raise RuntimeError("Failed to connect to any database")
         
     def get_session(self, db_id: str) -> scoped_session:
