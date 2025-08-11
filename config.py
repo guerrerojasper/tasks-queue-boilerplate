@@ -1,3 +1,3 @@
 class CeleryConfig(object):
-    broker_url = 'redis://localhost:6379/0'
+    broker_url = 'redis://localhost:6379/1'
     result_backend = 'redis://localhost:6379/0'
