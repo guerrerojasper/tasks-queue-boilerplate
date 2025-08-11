@@ -1,6 +1,5 @@
 from .celery import initialize_celery
 from .logger import Logger
-from .dbsession import ConnectionHandler, db_session_scope
 
 from config import *
 
@@ -13,3 +12,5 @@ logger = Logger(
 )
 
 logger.info(f"Celery app started.")
+
+from .dbsession import ConnectionHandler, db_session_scope

@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from contextlib import contextmanager
 from urllib.parse import quote_plus
+from . import logger
 
 
 class ConnectionHandler:
@@ -25,6 +26,7 @@ class ConnectionHandler:
         self.__session_factories: Dict[str, sessionmaker] = {}
         self.__scoped_sessions: Dict[str, scoped_session] = {}
         # Initilize connection
+        self.__initilize_connections()
 
     def __initilize_connections(self) -> None:
         """
@@ -40,8 +42,7 @@ class ConnectionHandler:
 
                 # Test connection
                 with engine.connect() as conn:
-                    print(f"Successfully connected to databaseid: {db_id}")
-                    # TODO: Logger class
+                    logger.info(f"Successfully connected to databaseid: {db_id}")
                 
                 # Store engine and session factories
                 self.__engines[db_id] = engine
@@ -49,12 +50,11 @@ class ConnectionHandler:
                 self.__scoped_sessions[db_id] = scoped_session(self.__session_factories[db_id])
 
             except Exception as e:
-                # TODO: Logger class
+                logger.error(f"Failed to connect to database {db_id}: {str(e)}")
                 continue
         
         if not self.__engines:
-            # TODO: Logger class
-            print(f"No database could be connected. Database list: {','.join(self.__database_list)} ")
+            logger.error(f"No database could be connected. Database list: {','.join(self.__database_list)} ")
             raise RuntimeError("Failed to connect to any database")
         
     def get_session(self, db_id: str) -> scoped_session:
@@ -62,8 +62,7 @@ class ConnectionHandler:
         Return the scoped session for a specific database_id.
         """
         if db_id not in self.__scoped_sessions:
-            # TODO: Logger class
-            print(f"Database {db_id} not available.")
+            logger.error(f"Database {db_id} not available.")
             raise ValueError(f"Database {db_id} not configured or connected.")
 
         return self.__scoped_sessions[db_id]
@@ -74,13 +73,11 @@ class ConnectionHandler:
         """
         for db_id, engine in self.__engines.items():
             try:
-                # TODO: Logger class
-                print(f"Disposing engine for {db_id}")
+                logger.info(f"Disposing engine for {db_id}")
                 engine.dispose()
 
             except Exception as e:
-                # TODO: Logger class
-                print(f"Could not dispose engine for {db_id}: {str(e)} ")
+                logger.error(f"Could not dispose engine for {db_id}: {str(e)} ")
 
 
 @contextmanager
@@ -95,6 +92,27 @@ def db_session_scope(handler: ConnectionHandler, db_id: str, read_only: bool = F
 
     Yield:
         The session instance.
+
+    Example usage:
+        ```
+        # Insertion
+        processed_count = 0
+        with db_session_scope(handler, 'DBID', batch_size=500) as session:
+            for row in dictionary:
+                insert to table
+                ....
+                session.add(...)
+
+                processed_count += 1
+                if batch_size and processed_count % batch_size == 0:
+                    session.flush() # manually flush to free up memory and stage the changes
+        ```
+        ```
+        # Read-only
+        with db_session_scope(handler, 'DBID', read_only=True) as session:
+            query_output = session.query(...).all()
+        ```
+
     """
     scoped_session = handler.get_session(db_id)
     session = scoped_session()
@@ -104,13 +122,11 @@ def db_session_scope(handler: ConnectionHandler, db_id: str, read_only: bool = F
             session.commit()
 
     except Exception as e:
-        # TODO: Logger class
-        print(f"Operation failed on database {db_id}.")
+        logger.error(f"Operation failed on database {db_id}.")
         session.rollback()
         raise
 
     finally:
         session.close()
         scoped_session.remove()
-        # TODO: Logger class
-        print(f"Session close for database {db_id}.")
+        logger.debug(f"Session close for database {db_id}.")
