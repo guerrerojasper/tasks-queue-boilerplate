@@ -35,7 +35,7 @@ class ConnectionHandler:
         for db_id in self.__database_list:
             try:
                 # Construct database URI
-                conn_string = f"mssql+pymssql://{self.__username}:{self.__password}@{self.__password}/{self.__server}?charset=utf8&tds_version=7.0"
+                conn_string = f"mssql+pymssql://{quote_plus(self.__username)}:{quote_plus(self.__password)}@{quote_plus(self.__password)}/{quote_plus(self.__server)}?charset=utf8&tds_version=7.0"
 
                 # Create engine with connection pooling
                 engine = create_engine(conn_string, pool_size=5, max_overflow=10)
@@ -92,6 +92,10 @@ def db_session_scope(handler: ConnectionHandler, db_id: str, read_only: bool = F
 
     Yield:
         The session instance.
+    
+    Note:
+        For bulk inserts, use session.bulk_insert_mappings() within the scope for efficiency.
+        If batch_size is set, split bulk inserts into chunks to manage transaction size.
 
     Example usage:
         ```
@@ -110,7 +114,20 @@ def db_session_scope(handler: ConnectionHandler, db_id: str, read_only: bool = F
         ```
         # Read-only
         with db_session_scope(handler, 'DBID', read_only=True) as session:
-            query_output = session.query(...).all()
+            query_output1 = session.query(...).all()
+            query_output2 = session.query(...).all()
+        ```
+        ```
+        # Bulk insertion
+        with db_session_scope(handler, 'DBID', batch_size=500) as session:
+            for i in range(0, len(data), batch_size):
+                batch = data[i:i + batch_size]
+                session.bulk_insert_mappings(
+                    TableObject,
+                    [
+                        {...} // list of dict
+                    ]
+                )
         ```
 
     """
@@ -130,3 +147,6 @@ def db_session_scope(handler: ConnectionHandler, db_id: str, read_only: bool = F
         session.close()
         scoped_session.remove()
         logger.debug(f"Session close for database {db_id}.")
+
+
+# TODO: Add an option for bulk insert

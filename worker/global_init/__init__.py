@@ -1,14 +1,13 @@
-from .celery import initialize_celery
+from config import config
 from .logger import Logger
-
-from config import *
+from .celery import initialize_celery
 
 app = initialize_celery()
 logger = Logger(
-    debug=LOGGER_DEBUG,
-    identifier=LOGGER_IDENTIFIER,
-    max_bytes=LOGGER_MAX_BYTE,
-    backup_count=LOGGER_DEBUG
+    debug=config.LOGGER_DEBUG,
+    identifier=config.LOGGER_IDENTIFIER,
+    max_bytes=config.LOGGER_MAX_BYTE,
+    backup_count=config.LOGGER_DEBUG
 )
 
 logger.info(f"Celery app started.")
