@@ -1,5 +1,6 @@
 import os
 import logging
+from config import config
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 
@@ -15,8 +16,8 @@ class Logger:
         """
         Initialize the logger with rotating file handling and optional debug mode (format).
         Args:
-            debug (bool): Enable detailed debug loggine if True, else use basic infor logging.
-            identifier (str): Identifier name.
+            debug (bool): Enable detailed debug logging if True, else use basic info logging.
+            identifier (str): App identifier.
             max_bytes (int): Max size of log file in bytes before rotation (default: 10MB).
             backup_count (int): Number of backup log files to keep (default: 5).
         """
@@ -101,3 +102,12 @@ class Logger:
             msg: Message to log.
         """
         self.logger.critical(msg)
+
+
+# Global logger
+logger = Logger(
+    debug=config.LOGGER_DEBUG,
+    identifier=config.LOGGER_IDENTIFIER,
+    max_bytes=config.LOGGER_MAX_BYTE,
+    backup_count=config.LOGGER_DEBUG
+)

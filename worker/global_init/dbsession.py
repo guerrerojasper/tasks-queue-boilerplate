@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from contextlib import contextmanager
 from urllib.parse import quote_plus
-from . import logger
+from .logger import logger
 
 
 class ConnectionHandler:
